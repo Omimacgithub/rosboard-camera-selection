@@ -5,10 +5,20 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   sensor_msgs
+  message_generation
 )
 
 catkin_python_setup()
-catkin_package()
+catkin_package(
+
+  CATKIN_DEPENDS message_runtime std_msgs sensor_msgs
+)
+generate_messages($
+   DEPENDENCIES$
+   std_msgs$
+   visualization_msgs$
+   sensor_msgs$
+)$ 
 
 catkin_install_python(PROGRAMS
   nodes/rosboard_node

@@ -20,6 +20,7 @@ else:
 
 from rosgraph_msgs.msg import Log
 
+from rosboard.srv import Pseudonim, PseudonimResponse
 from rosboard.serialization import ros2dict
 from rosboard.subscribers.dmesg_subscriber import DMesgSubscriber
 from rosboard.subscribers.processes_subscriber import ProcessesSubscriber
@@ -85,6 +86,8 @@ class ROSBoardNode(object):
         self.logwarn = rospy.logwarn
         self.logerr = rospy.logerr
 
+        self.s = rospy.Service('Pseudonim', Pseudonim, self.pcallback)
+
         # tornado event loop. all the web server and web socket stuff happens here
         threading.Thread(target = self.event_loop.start, daemon = True).start()
 
@@ -97,6 +100,12 @@ class ROSBoardNode(object):
         self.lock = threading.Lock()
 
         rospy.loginfo("ROSboard listening on :%d" % self.port)
+
+    def pcallback(self, req):
+      # Tornado code to change html
+      # Display req.crop var
+      print("RECIBIDO: ", req.recp)
+      return PseudonimResponse("respuesta")#user_input)
 
     def start(self):
         rospy.spin()
