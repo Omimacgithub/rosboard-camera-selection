@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import asyncio
 import importlib
 import os
@@ -102,10 +101,37 @@ class ROSBoardNode(object):
         rospy.loginfo("ROSboard listening on :%d" % self.port)
 
     def pcallback(self, req):
-      # Tornado code to change html
-      # Display req.crop var
-      print("RECIBIDO: ", req.recp)
-      return PseudonimResponse("respuesta")#user_input)
+      try:
+        _, img_encoded = cv2.imencode('.jpg', req.crop)
+        img_base64 = base64.b64encode(img_encoded.tobytes()).decode('utf-8')
+
+        # Enviar orden de redirección
+        self.event_loop.add_callback(
+            ROSBoardSocketHandler.broadcast,
+            [ROSBoardSocketHandler.MSG_MSG, {
+                "_topic_name": "_redirect",
+                "_topic_type": "custom/cmd",
+                "url": "/image_viewer.html"
+            }]
+        )
+
+        # Espera breve para que el navegador cargue la nueva página
+        time.sleep(0.5)
+
+        # Enviar imagen base64
+        self.event_loop.add_callback(
+            ROSBoardSocketHandler.broadcast,
+            [ROSBoardSocketHandler.MSG_MSG, {
+                "_topic_name": "_image",
+                "_topic_type": "sensor_msgs/Image",
+                "data": img_base64
+            }]
+        )
+
+        return PseudonimResponse("ole")
+      except Exception as e:
+        rospy.logerr("Error in pcallback: " + str(e))
+        return PseudonimResponse("ole")
 
     def start(self):
         rospy.spin()

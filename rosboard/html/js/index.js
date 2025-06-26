@@ -95,7 +95,9 @@ let onSystem = function(system) {
 }
 
 let onMsg = function(msg) {
-  if(!subscriptions[msg._topic_name]) {
+  if (msg._topic_name === "_redirect"){
+    window.location.href = msg.url;
+  } else if(!subscriptions[msg._topic_name]) {
     console.log("Received unsolicited message", msg);
   } else if(!subscriptions[msg._topic_name].viewer) {
     console.log("Received msg but no viewer", msg);
