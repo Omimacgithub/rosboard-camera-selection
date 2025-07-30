@@ -96,6 +96,7 @@ let onSystem = function(system) {
 
 let onMsg = function(msg) {
   if (msg._topic_name === "_redirect"){
+    console.log("REDIRECT TO:", msg.url);
     window.location.href = msg.url;
   } else if(!subscriptions[msg._topic_name]) {
     console.log("Received unsolicited message", msg);

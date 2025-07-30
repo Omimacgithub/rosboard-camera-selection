@@ -107,6 +107,9 @@ class ROSBoardSocketHandler(tornado.websocket.WebSocketHandler):
                         if json_msg is None:
                             json_msg = json.dumps(message, separators=(',', ':'))
                         socket.write_message(json_msg)
+                        # TODO: 
+                        if topic_name == "_redirect":
+                          print(json_msg)
                     socket.last_data_times_by_topic[topic_name] = t
         except Exception as e:
             print("Error sending message: %s" % str(e))

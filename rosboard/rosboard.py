@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import asyncio
 import importlib
+import cv2
+from cv_bridge import CvBridge, CvBridgeError
 import os
 import socket
 import threading
@@ -34,6 +36,7 @@ class ROSBoardNode(object):
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
         self.title = rospy.get_param("~title", socket.gethostname())
+        self.bridge = CvBridge()
 
         # desired subscriptions of all the websockets connecting to this instance.
         # these remote subs are updated directly by "friend" class ROSBoardSocketHandler.
@@ -102,7 +105,8 @@ class ROSBoardNode(object):
 
     def pcallback(self, req):
       try:
-        _, img_encoded = cv2.imencode('.jpg', req.crop)
+        frame = self.bridge.imgmsg_to_cv2(req.crop, "bgr8")
+        _, img_encoded = cv2.imencode('.jpg', frame)
         img_base64 = base64.b64encode(img_encoded.tobytes()).decode('utf-8')
 
         # Enviar orden de redirección
