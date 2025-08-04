@@ -30,6 +30,9 @@ from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
 from rosboard.subscribers.dummy_subscriber import DummySubscriber
 from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler
 
+# Global future to store the next POST
+#next_post_future = None
+
 class SubmitHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header('Access-Control-Allow-Origin', '*')
@@ -42,26 +45,23 @@ class SubmitHandler(tornado.web.RequestHandler):
     def get(self):
         self.write("hola")
     def post(self):
+        global next_post_future
         try:
-            data = json.loads(self.request.body)
-            user_input = data.get('user_input', '')
-            
-            # Process the input as needed
-            print(f"Received input: {user_input}")
-            
-            # Return a response (as a Python dict which will be JSON-encoded)
-            response = {
-                'status': 'success',
-                'received_input': user_input,
-                'processed': f"Processed: {user_input.upper()}"  # Example processing
-            }
-            self.write(response)
+            data = tornado.escape.json_decode(self.request.body)
+            user_input = data.get("user_input", "")
+    
+            # Complete the waiting future
+            #if next_post_future is not None and not next_post_future.done():
+            #  next_post_future.set_result(user_input)
+            # Do something with user_input
+            self.write({"status": "success"})
+            print("INPUT: ", str(user_input))
 
-            return PseudonimResponse(user_input)
-            
         except Exception as e:
-            self.set_status(400)
-            self.write({'status': 'error', 'message': str(e)})
+            rospy.logerr(str(e))
+            traceback.print_exc()
+            self.set_status(500)
+            self.write({"status": "error", "message": str(e)})
 
 class ROSBoardNode(object):
     instance = None
@@ -106,22 +106,13 @@ class ROSBoardNode(object):
                 (r"/rosboard/v1", ROSBoardSocketHandler, {
                     "node": self,
                 }),
+                (r"/submit/?", SubmitHandler),
                 (r"/(.*)", NoCacheStaticFileHandler, {
                     "path": tornado_settings.get("static_path"),
                     "default_filename": "index.html"
-                }),
-                (r"/submit/(.*)", SubmitHandler)
+                })
+                
         ]
-        '''
-        (r"/index/(.*)", NoCacheStaticFileHandler, {
-        "path": tornado_settings.get("static_path"),
-        "default_filename": "index.html"
-        }),
-        (r"/image_viewer/(.*)", NoCacheStaticFileHandler, {
-        "path": tornado_settings.get("static_path"),
-        "default_filename": "image_viewer.html"
-        })
-        '''
         self.event_loop = None
         self.tornado_application = tornado.web.Application(tornado_handlers, **tornado_settings)
         asyncio.set_event_loop(asyncio.new_event_loop())
@@ -132,7 +123,7 @@ class ROSBoardNode(object):
         self.logwarn = rospy.logwarn
         self.logerr = rospy.logerr
 
-        self.s = rospy.Service('Pseudonim', Pseudonim, self.pcallback)
+        
 
         # tornado event loop. all the web server and web socket stuff happens here
         threading.Thread(target = self.event_loop.start, daemon = True).start()
@@ -147,7 +138,10 @@ class ROSBoardNode(object):
 
         rospy.loginfo("ROSboard listening on :%d" % self.port)
 
+        self.s = rospy.Service('Pseudonim', Pseudonim, self.pcallback)
+
     def pcallback(self, req):
+      global next_post_future
       try:
         
         frame = self.bridge.imgmsg_to_cv2(req.crop, "bgr8")
@@ -163,22 +157,12 @@ class ROSBoardNode(object):
                 "_data": f"data:image/jpeg;base64,{img_base64}"
             }]
         )
+        #next_post_future = asyncio.get_event_loop().create_future()
+        #user_input = await next_post_future
+        #next_post_future = None
+        #print("RESULTADO: ", user_input.result())
 
-        '''
-        # Espera breve para que el navegador cargue la nueva página
-        time.sleep(0.5)
-
-        # Enviar imagen base64
-        self.event_loop.add_callback(
-            ROSBoardSocketHandler.broadcast,
-            [ROSBoardSocketHandler.MSG_MSG, {
-                "_topic_name": "_image",
-                "_topic_type": "sensor_msgs/Image",
-                "data": img_base64
-            }]
-        )
-        '''
-        return PseudonimResponse("ole")
+        return PseudonimResponse("Emmanuel")#str(user_input.result()))
       except Exception as e:
         rospy.logerr("Error in pcallback: " + str(e))
 

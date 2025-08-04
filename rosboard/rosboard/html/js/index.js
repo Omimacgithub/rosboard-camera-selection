@@ -108,7 +108,6 @@ let currentTopics = {};
 let currentTopicsStr = "";
 
 let onTopics = function(topics) {
-  console.log(topics)
   if (topics._topic_name === "_redirect"){
     // Change the image when modal opens
     let modalImage = document.getElementById("modalImage");
@@ -138,6 +137,7 @@ let onTopics = function(topics) {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
+              'User-Agent': 'firefox/0.1'
           },
           body: JSON.stringify({ user_input: inputValue })
       })
@@ -150,7 +150,7 @@ let onTopics = function(topics) {
           console.error('Error:', error);
       });
 
-    });
+    }); 
 
     // Also close when clicking outside modal
     window.addEventListener('click', function(event) {
