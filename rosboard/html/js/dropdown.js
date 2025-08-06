@@ -1,5 +1,18 @@
 "use strict";
 
+var camlist = [];
+// Cam list:
+fetch('/topology.json')
+  .then(response => response.json())
+  .then(data => {
+   let i = 0;
+   data.cameras.forEach((item) => {
+     camlist.push({ text: item.id, id: `menu-item-${i}`, value: `/camswall/${item.id}`});
+     i += 1;
+  });
+  })
+  .catch(error => console.error('Error loading JSON:', error));
+
 // JavaScript to handle dropdown selection (The tailwind implementation: https://tailwindui.com/components/application-ui/elements/dropdowns in HTML doesn't include the javascript logic)
 function selectOption(value) {
   initSubscribe({topicName: value, topicType: 'sensor_msgs/Image'})
@@ -43,10 +56,11 @@ function createDropDown(){
   divElement.setAttribute("role", "none");
 
   // Array of menu items
-  const menuItems = [
+  /*
+  const camlist = [
   { text: "right", id: "menu-item-0", value: "/camswall/right" },
   { text: "left", id: "menu-item-1", value: "/camswall/left" },
-  ];
+  ];*/
 
   // Function to create a menu item
   function createMenuItem(item) {
@@ -65,7 +79,7 @@ function createDropDown(){
   }
 
   // Append each menu item to the div
-  menuItems.forEach((item) => {
+  camlist.forEach((item) => {
     const menuItem = createMenuItem(item);
     divElement.appendChild(menuItem);
   });
